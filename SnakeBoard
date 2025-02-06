@@ -1,0 +1,35 @@
+import javax.swing.*;
+import java.awt.*;
+
+public class SnakeGame extends JPanel {
+    private final int TILE_SIZE = 20;
+    private final int WIDTH = 20;
+    private final int HEIGHT = 20;
+    private int[][] snake = {{5, 5}, {4, 5}, {3, 5}};
+    private int[] food = {10, 10};
+
+    public SnakeGame() {
+        setPreferredSize(new Dimension(WIDTH * TILE_SIZE, HEIGHT * TILE_SIZE));
+        setBackground(Color.BLACK);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        g.setColor(Color.GREEN);
+        for (int[] part : snake) {
+            g.fillRect(part[0] * TILE_SIZE, part[1] * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        }
+        g.setColor(Color.RED);
+        g.fillOval(food[0] * TILE_SIZE, food[1] * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    }
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Snake Game");
+        SnakeGame game = new SnakeGame();
+        frame.add(game);
+        frame.pack();
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+    }
+}
