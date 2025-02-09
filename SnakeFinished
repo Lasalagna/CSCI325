@@ -1,0 +1,137 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class SnakeGame extends JPanel implements KeyListener {
+    private final int TILE_SIZE = 20;
+    private final int WIDTH = 20;
+    private final int HEIGHT = 20;
+    private int[][] snake = {{5, 5}, {4, 5}, {3, 5}};
+    private int[] food = {10, 10};
+    private String direction = "RIGHT";  // Initial direction
+    private boolean gameOver = false;
+
+    public SnakeGame() {
+        setPreferredSize(new Dimension(WIDTH * TILE_SIZE, HEIGHT * TILE_SIZE));
+        setBackground(Color.BLACK);
+        addKeyListener(this);
+        setFocusable(true);
+        Timer timer = new Timer(100, e -> updateGame());
+        timer.start();
+    }
+
+    private void updateGame() {
+        if (gameOver) return;
+
+        int[] head = snake[0];
+        int[] newHead = new int[2];
+
+        switch (direction) {
+            case "UP":
+                newHead[0] = head[0];
+                newHead[1] = head[1] - 1;
+                break;
+            case "DOWN":
+                newHead[0] = head[0];
+                newHead[1] = head[1] + 1;
+                break;
+            case "LEFT":
+                newHead[0] = head[0] - 1;
+                newHead[1] = head[1];
+                break;
+            case "RIGHT":
+                newHead[0] = head[0] + 1;
+                newHead[1] = head[1];
+                break;
+        }
+
+        // Move snake
+        for (int i = snake.length - 1; i > 0; i--) {
+            snake[i] = snake[i - 1];
+        }
+        snake[0] = newHead;
+
+        // Check for collision with food
+        if (newHead[0] == food[0] && newHead[1] == food[1]) {
+            int[][] newSnake = new int[snake.length + 1][2];
+            System.arraycopy(snake, 0, newSnake, 1, snake.length);
+            snake = newSnake;
+            spawnFood();
+        }
+
+        // Check for collision with walls or itself
+        if (newHead[0] < 0 || newHead[0] >= WIDTH || newHead[1] < 0 || newHead[1] >= HEIGHT || checkCollision()) {
+            gameOver = true;
+            repaint();
+            return;
+        }
+
+        repaint();
+    }
+
+    private boolean checkCollision() {
+        int[] head = snake[0];
+        for (int i = 1; i < snake.length; i++) {
+            if (head[0] == snake[i][0] && head[1] == snake[i][1]) {
+                return true;  // Snake hit itself
+            }
+        }
+        return false;
+    }
+
+    private void spawnFood() {
+        food[0] = (int) (Math.random() * WIDTH);
+        food[1] = (int) (Math.random() * HEIGHT);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        if (gameOver) {
+            g.setColor(Color.RED);
+            g.setFont(new Font("Arial", Font.BOLD, 30));
+            g.drawString("GAME OVER!", 50, HEIGHT * TILE_SIZE / 2);
+            return;
+        }
+
+        // Draw snake
+        g.setColor(Color.GREEN);
+        for (int[] part : snake) {
+            g.fillRect(part[0] * TILE_SIZE, part[1] * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        }
+
+        // Draw food
+        g.setColor(Color.RED);
+        g.fillOval(food[0] * TILE_SIZE, food[1] * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {}
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        int keyCode = e.getKeyCode();
+        if (keyCode == KeyEvent.VK_UP && !direction.equals("DOWN")) {
+            direction = "UP";
+        } else if (keyCode == KeyEvent.VK_DOWN && !direction.equals("UP")) {
+            direction = "DOWN";
+        } else if (keyCode == KeyEvent.VK_LEFT && !direction.equals("RIGHT")) {
+            direction = "LEFT";
+        } else if (keyCode == KeyEvent.VK_RIGHT && !direction.equals("LEFT")) {
+            direction = "RIGHT";
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {}
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Snake Game");
+        SnakeGame game = new SnakeGame();
+        frame.add(game);
+        frame.pack();
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+    }
+}
