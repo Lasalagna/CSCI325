@@ -1,0 +1,160 @@
+package csu.csci325;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.LinkedList;
+import java.util.Random;
+
+public class SnakeGamePanel extends JPanel implements ActionListener {
+    public static final int TILE_SIZE = 30;
+    public static final int WIDTH = 600;
+    public static final int HEIGHT = 600;
+    public static final int NUM_TILES_X = WIDTH / TILE_SIZE;
+    public static final int NUM_TILES_Y = HEIGHT / TILE_SIZE;
+    public static LinkedList<Point> snake;
+    private Point food;
+    private char direction;
+    private static boolean gameOver, paused;
+    private Timer timer;
+    private int score;
+    private Random rand = new Random();
+    private Color foodCol = new Color(255, 0, 0); 
+    private Color snakeCol = new Color(0, 255, 0);
+
+    public SnakeGamePanel() {
+        setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        setBackground(Color.BLACK);
+        timer = new Timer(100, this);
+        timer.start();
+        resetGame();
+
+        
+
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (gameOver) {
+                    if (e.getKeyCode() == KeyEvent.VK_R) {
+                        resetGame();
+                        repaint();
+                    }
+                    return;
+                }
+                if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+                    paused = !paused;
+                    repaint();
+                }
+                if (paused) return;
+                int key = e.getKeyCode();
+                if (key == KeyEvent.VK_UP && direction != 'D') direction = 'U';
+                if (key == KeyEvent.VK_DOWN && direction != 'U') direction = 'D';
+                if (key == KeyEvent.VK_LEFT && direction != 'R') direction = 'L';
+                if (key == KeyEvent.VK_RIGHT && direction != 'L') direction = 'R';
+            }
+        });
+        setFocusable(true);
+    }
+
+    private void resetGame() {
+        snake = new LinkedList<>();
+        snake.add(new Point(NUM_TILES_X / 2, NUM_TILES_Y / 2));
+        snake.add(new Point(NUM_TILES_X / 2 - 1, NUM_TILES_Y / 2));
+        direction = 'R';
+        foodCol = setColors(foodCol);
+        snakeCol = setColors(snakeCol);
+        spawnFood();
+        gameOver = false;
+        paused = false;
+        score = 0;
+        timer.start();
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (gameOver || paused) return;
+        
+        Point head = snake.getFirst();
+        Point newHead;
+        newHead = switch(direction){
+            case 'U' -> new Point(Snake.turnUp(head));
+            case 'D' -> new Point(Snake.turnDown(head));
+            case 'L' -> new Point(Snake.turnLeft(head));
+            default -> new Point(Snake.turnRight(head));
+        };
+        
+        System.out.println("neawhead" + newHead);
+        System.out.println(snake);
+        
+        
+        gameOver = Snake.checkCollision(newHead, snake);
+        if(gameOver == true){
+            timer.stop();
+            repaint();
+            return;
+        }
+
+        snake.addFirst(newHead);
+        if (newHead.equals(food)) {
+            score++;
+            spawnFood();
+        } else {
+            snake.removeLast();
+        }
+
+        repaint();
+    }
+
+    private void spawnFood() {
+        do {
+            food = new Point(rand.nextInt(NUM_TILES_X), rand.nextInt(NUM_TILES_Y));
+        } while (snake.contains(food));
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (gameOver) {
+            g.setColor(Color.RED);
+            g.setFont(new Font("Arial", Font.BOLD, 30));
+            g.drawString("Game Over! Press R to restart", WIDTH / 6, HEIGHT / 2);
+            return;
+        }
+
+        if (paused) {
+            g.setColor(Color.YELLOW);
+            g.setFont(new Font("Arial", Font.BOLD, 30));
+            g.drawString("Paused", WIDTH / 2 - 50, HEIGHT / 2);
+            return;
+        }
+
+        g.setColor(Color.DARK_GRAY);
+        for (int i = 0; i < WIDTH; i += TILE_SIZE) {
+            g.drawLine(i, 0, i, HEIGHT);
+        }
+        for (int i = 0; i < HEIGHT; i += TILE_SIZE) {
+            g.drawLine(0, i, WIDTH, i);
+        }
+
+        g.setColor(snakeCol);
+        for (Point p : snake) {
+            g.fillRect(p.x * TILE_SIZE, p.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        }
+
+        g.setColor(foodCol);
+        g.fillRect(food.x * TILE_SIZE, food.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("Arial", Font.BOLD, 20));
+        g.drawString("Score: " + score, 10, 20);
+    }
+    
+    protected Color setColors(Color objColor){
+        int red = rand.nextInt(50,256);
+        int green = rand.nextInt(50,256);
+        int blue = rand.nextInt(50,256);
+
+        objColor = new Color(red, green, blue);
+        return objColor;
+    }
+}
